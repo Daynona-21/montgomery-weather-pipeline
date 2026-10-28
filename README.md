@@ -1,110 +1,94 @@
-# Montgomery Weather Pipeline
+# Montgomery Weather App
 
-A small beginner project using Python, a REST API, JSON, and SQLite SQL.
-It fetches seven daily maximum-temperature forecasts for Montgomery, Alabama,
-checks the records, stores them, and prints the warmest stored day.
-These are forecasts, not measured weather observations.
+A small Python project that fetches weather forecasts for Montgomery, Alabama, saves them in a SQLite database, and displays them in a simple Streamlit interface.
 
-## Run it
+I put this project together with AI assistance to practice working with APIs, Python, and SQL.
 
-You need Python 3.9 or later. No extra packages or API keys are needed.
-Unzip the project, open its folder in VS Code, and open Terminal > New Terminal.
+## What it does
 
-Start with invented practice data (no internet needed):
+- Gets seven days of forecasts from the Open-Meteo API.
+- Checks dates and temperatures before saving them.
+- Stores forecasts in SQLite.
+- Updates existing dates instead of adding duplicate records.
+- Displays the forecast in a table and highlights the warmest day.
+- Includes an offline mode with made-up practice data.
+
+Temperatures are in Celsius. The data represents forecasts, not measured observations.
+
+## Tools used
+
+- Python
+- SQL and SQLite
+- REST API and JSON
+- Streamlit
+
+## How to run it
+
+Install Python 3.9 or later and download this repository. Open a terminal inside the project folder.
+
+Install the required package:
 
 ```bash
-python weather.py --demo
+python -m pip install -r requirements.txt
 ```
 
-On Windows, use `py` instead of `python` if necessary. On macOS/Linux,
-you may need `python3`.
+Start the web interface:
 
-Expected practice results:
-
-```text
-2027-06-01: 28.5 C
-2027-06-02: 30.0 C
-2027-06-03: 29.2 C
-
-Warmest stored day: 2027-06-02 (30.0 C)
+```bash
+python -m streamlit run app.py
 ```
 
-Fetch actual forecasts with an internet connection:
+The app opens in your browser. Click **Fetch latest forecast** to retrieve and save the data. Keep the terminal running while using the app.
+
+To stop the app, press **Ctrl + C** in the terminal.
+
+### Run without the interface
+
+Fetch real forecasts:
 
 ```bash
 python weather.py
 ```
 
-Practice uses `demo_weather.db`; the API run uses `weather.db`.
-Messages and errors are written to `pipeline.log`.
-If the network request fails, the script exits with an error and suggests demo
-mode; it never silently presents invented data as a real forecast.
-
-## Read the code in this order
-
-1. `get_data`: downloads JSON, or opens the practice file.
-2. `clean_data`: pairs dates with temperatures, checks dates and numbers,
-   and skips invalid records. Unequal list lengths stop the run.
-3. `save_and_report`: creates a table, saves records, and runs SQL queries.
-4. `main`: connects those steps and handles errors.
-
-This is a small ETL pipeline: extract data, transform/check it, then load it.
-SQLite is a database stored in a local file; SQL is the language used to query it.
-The table has two columns: `day` and `max_temp_c` (degrees Celsius).
-
-## Understand the SQL
-
-`CREATE TABLE IF NOT EXISTS` creates the table on the first run.
-`PRIMARY KEY` makes each date unique. The `ON CONFLICT` clause updates an
-existing date instead of inserting a duplicate. `excluded.max_temp_c` means
-the new temperature we tried to insert. `?` placeholders pass values safely.
-
-```sql
-SELECT day, max_temp_c
-FROM weather
-ORDER BY max_temp_c DESC, day ASC
-LIMIT 1;
-```
-
-This sorts from hottest to coolest, breaks ties by the earliest date, and
-returns one row. The query covers all stored dates. Older dates remain in the
-database; rerunning updates dates that appear in the new response. The project
-does not keep a history of earlier forecast versions.
-
-## Three exercises before adding it to your resume
-
-1. Run demo mode twice. There should still be three rows printed.
-2. Change `30.0` to `31.5` in sample.json and rerun. See the saved value update.
-3. Change a temperature to `null`. Rerun and inspect pipeline.log for the warning.
-   An existing saved record stays in the database if its new input is invalid.
-
-Explain aloud: Where does the data come from? Why use a primary key?
-What happens when the API fails? What does the SQL query return?
-
-## Git practice
-
-Once Git is installed, run these from this project folder:
+Try the offline practice version:
 
 ```bash
-git init
-git add weather.py sample.json README.md .gitignore
-git commit -m "Add beginner weather data pipeline"
+python weather.py --demo
 ```
 
-Git may ask you to configure your name and email before the first commit.
-The ignore file excludes generated databases and logs. Publishing to GitHub
-is a separate step; this download does not create a GitHub repository.
+On Windows, use `py` instead of `python` if needed.
 
-## Scope and source
+## Project files
 
-This version demonstrates Python, JSON, a REST GET request, basic validation,
-SQL, duplicate prevention, and logging. It does not implement Snowflake,
-API authentication, automatic scheduling, or a web interface.
-It was created with AI assistance as a learning starter. Run, understand,
-and modify it before describing your contribution in an application.
+| File | Purpose |
+|---|---|
+| `weather.py` | Fetches, checks, stores, and queries weather data |
+| `app.py` | Displays the Streamlit interface |
+| `sample.json` | Contains invented data for offline practice |
+| `requirements.txt` | Lists the extra package needed for the interface |
+| `.gitignore` | Excludes generated databases, logs, and Python cache files |
 
-Weather data: [Open-Meteo](https://open-meteo.com/).
-API reference: https://open-meteo.com/en/docs
-Data attribution/license: https://open-meteo.com/en/licence
-The included sample.json values are invented for practice, not API data.
+The program creates `weather.db` for real forecasts and `demo_weather.db` for practice data. The pipeline also records messages in `pipeline.log`. These generated files are not included in the repository.
 
+## How the data flows
+
+1. Python requests forecast data from Open-Meteo.
+2. The JSON response is checked for valid dates and numeric temperatures.
+3. Valid records are saved to SQLite.
+4. A date acts as the primary key, so running the program again updates that date's forecast.
+5. The terminal version uses SQL to find the warmest stored day. The interface highlights the warmest day in the newly fetched forecast.
+
+Older dates remain in the database. The project does not keep previous versions of a forecast.
+
+## Scope
+
+This is a beginner learning project. It runs locally and does not include API authentication, Snowflake, or automatic scheduling.
+
+## Data source
+
+Weather forecasts are provided by [Open-Meteo](https://open-meteo.com/).
+
+- [API documentation](https://open-meteo.com/en/docs)
+- [Data license and attribution](https://open-meteo.com/en/licence)
+
+The values in `sample.json` are invented for practice.
